@@ -35,45 +35,55 @@ page.onConsoleMessage = function(msg) {
 page.onError = function() {
   console.log(stringify(arguments));
 }
+
 page.onLoadFinished = function(status) {
   if (status === 'success') {
-    page.evaluate(function(){
-      var getMaxY = function() {
-        return document.documentElement.scrollHeight - document.documentElement.clientHeight;
-      };
-      var stringify = function(obj) {
-        return JSON.stringify(obj, null, 2);
-      };
-
-      (function($){
-        var testFn = function() {
-          var maxY = getMaxY();
+    var scrollFn = function() {
+      console.log('scrolling...');
+      page.evaluate(function(){
+        (function($){
+          var maxY = document.documentElement.scrollHeight - document.documentElement.clientHeight;
           var curPos = $(window).scrollTop();
-          var reachedEnd = curPos === maxY;
-          console.log(stringify({
-            maxY: maxY,
-            curPos: curPos,
-            isEnd: reachedEnd
+          console.log(JSON.stringify({
+            cur: curPos, maxY: maxY
           }));
-
-          if (!reachedEnd) {
+          if (maxY !== curPos) {
             $(window).scrollTop(maxY);
-            //repeat
-            console.log('repeating...');
-            setTimeout(testFn, 10000);
           }
           else {
-            console.log('done');
+            console.log('done')
           }
-        };
+        })(window.jQuery);
+      });//end page evaluate
+    }; //end scrollFn
 
-        setTimeout(testFn, 500);
+    _run(scrollFn, 'server_call_POST')
 
-      })(window.jQuery);
-
-
-    });
   }
 }
 
-page.open(url)
+page.open(url);
+
+function _run(fn, part) {
+
+  page.onResourceRequested = function(req) {
+    if (req.url.indexOf(part) > -1) {
+      // console.log('Requested:', req.url);
+      _log({type: 'req', id: req.id, url: req.url})
+    }
+  };
+
+  page.onResourceReceived = function(res) {
+    if (res.url.indexOf(part) > -1 && res.stage === 'end') {
+      // console.log('Response:', res.url);
+      _log({type: 'res', id: res.id, url: res.url})
+      setTimeout(fn, 10000);
+    }
+  };
+
+  // setTimeout(fn, 300);
+}
+
+function _log(obj) {
+  console.log(JSON.stringify(obj));
+}

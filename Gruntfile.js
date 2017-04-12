@@ -1,5 +1,6 @@
 var exec = require('child_process').exec;
 const path = require('path');
+const fs = require('fs');
 // var phantomBin = path.join(__dirname, 'node_modules/.bin/phantomjs');
 
 module.exports = function(grunt) {
@@ -18,7 +19,8 @@ module.exports = function(grunt) {
   grunt.registerTask('exec', function(){
     var done = this.async();
     exec('npm start', function(err, stdout, stderr){
-      grunt.log.writeln(stdout);
+      fs.writeFileSync('out.txt', stdout, { encoding: 'utf8'});
+      grunt.log.writeln('written output...')
       done();
     });
   });
