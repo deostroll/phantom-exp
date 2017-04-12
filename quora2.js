@@ -35,6 +35,7 @@ page.onConsoleMessage = function(msg) {
 page.onError = function() {
   console.log(stringify(arguments));
 }
+var tmr = null;
 
 page.onLoadFinished = function(status) {
   if (status === 'success') {
@@ -50,11 +51,13 @@ page.onLoadFinished = function(status) {
           if (maxY !== curPos) {
             $(window).scrollTop(maxY);
           }
-          else {
-            console.log('done')
-          }
         })(window.jQuery);
       });//end page evaluate
+      tmr = setTimeout(function(){
+        page.evaluate(function(){
+          console.log('done');
+        });
+      },5000);
     }; //end scrollFn
 
     _run(scrollFn, 'server_call_POST')
@@ -63,21 +66,25 @@ page.onLoadFinished = function(status) {
 }
 
 page.open(url);
-
+// var loaded = false;
 function _run(fn, part) {
-
-  page.onResourceRequested = function(req) {
-    if (req.url.indexOf(part) > -1) {
-      // console.log('Requested:', req.url);
-      _log({type: 'req', id: req.id, url: req.url})
-    }
-  };
-
+  var loaded = false;
   page.onResourceReceived = function(res) {
     if (res.url.indexOf(part) > -1 && res.stage === 'end') {
       // console.log('Response:', res.url);
-      _log({type: 'res', id: res.id, url: res.url})
-      setTimeout(fn, 10000);
+      _log({type: 'res', id: res.id, url: res.url});
+      // setTimeout(fn, 10000);
+      if (tmr) {
+        clearTimeout(tmr);
+        tmr = null;
+      }
+      if (!loaded) {
+        loaded = true;
+        setTimeout(fn, 10000);
+      }
+      else {
+        setTimeout(fn, 10000);
+      }
     }
   };
 
