@@ -1,0 +1,35 @@
+(function($){
+
+  var interval = setInterval(function(){
+      var maxY = document.documentElement.scrollHeight - document.documentElement.clientHeight;
+      var scrollToEnd = maxY === $(window).scrollTop();
+      if (!scrollToEnd) {
+        setTimeout(function(){
+          $(window).scrollTop(maxY)
+        }, 500)
+      }
+      else {
+        console.log('Stoppinga');
+        clearInterval(interval);
+      }
+  }, 5000)
+})(window.jQuery);
+
+(function($){
+  var questions = $('.rendered_qtext')
+    .filter(function(i, el){
+      return $(el).parent().parent().is('a');
+    })
+    .map(function(i, el){
+      var a = $(el).parent().parent();
+      return {
+        url: a.attr('href'),
+        question: a.text()
+      }
+    }).get();
+
+  console.log('Question Count:', questions.length);
+  questions.forEach(function(q, i){
+    console.log(i,':', q.question);
+  })
+})(window.jQuery);
